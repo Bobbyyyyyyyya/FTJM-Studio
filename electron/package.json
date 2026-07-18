@@ -1,0 +1,18 @@
+{
+  "name": "ftjm-studio",
+  "version": "1.0.0",
+  "description": "FTJM Studio - AI Media Generator",
+  "main": "main.js",
+  "author": "FTJM",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "postinstall": "node node_modules/electron/install.js"
+  },
+  "devDependencies": {
+    "electron": "^43.0.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}
