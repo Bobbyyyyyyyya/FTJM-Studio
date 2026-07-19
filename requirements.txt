@@ -19,3 +19,6 @@ psutil
 # Handmatig: cd ACE-Step-1.5 && pip install -e .
 diffusers>=0.28.0
 soundfile
+
+# MusicGen PyTorch backend (Windows/Linux)
+audiocraft

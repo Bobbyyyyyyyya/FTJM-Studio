@@ -18,15 +18,27 @@ try:
 except ImportError:
     mx = None
 
-_BACKEND = None
+_TORCH_AVAILABLE = False
+try:
+    import torch
+    _TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+
+_backend = None
 
 if _MLX_AVAILABLE:
-    _BACKEND = "mlx"
+    _backend = "mlx"
+elif _TORCH_AVAILABLE:
+    _backend = "torch"
 else:
-    _BACKEND = "acestep"
+    _backend = "acestep"
 
 _mg_model = None
 _mg_model_name = None
+
+_torch_mg_model = None
+_torch_mg_model_name = None
 
 MODEL_OPTIONS = {
     "small": "facebook/musicgen-small",
@@ -216,7 +228,87 @@ def generate_audio_mlx(prompt, duration_seconds=10, guidance_scale=3.0,
 
 
 # ────────────────────────────────────────────────────────
-# ACE-Step Backend (Windows/Linux/macOS fallback)
+# PyTorch Backend (Windows/Linux/macOS fallback)
+# ────────────────────────────────────────────────────────
+
+def _load_model_torch(name="small"):
+    global _torch_mg_model, _torch_mg_model_name
+    if _torch_mg_model is not None and _torch_mg_model_name == name:
+        return _torch_mg_model
+
+    if _torch_mg_model is not None:
+        del _torch_mg_model
+        _torch_mg_model = None
+        gc.collect()
+
+    from audiocraft.models.musicgen import MusicGen
+
+    model_id = MODEL_OPTIONS.get(name, name)
+    print(f"[Audio] Laden {model_id} (PyTorch)...")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    _torch_mg_model = MusicGen.get_pretrained(model_id)
+    _torch_mg_model.to(device)
+    _torch_mg_model_name = name
+    gc.collect()
+    return _torch_mg_model
+
+
+def generate_audio_torch(prompt, duration_seconds=10, guidance_scale=3.0,
+                         seed=None, model="small", progress_callback=None):
+    mg = _load_model_torch(model)
+
+    if progress_callback:
+        progress_callback(5)
+
+    if seed is not None:
+        torch.manual_seed(seed)
+
+    max_dur = mg.max_duration or 30.0
+
+    print(f"[Audio] Genereren ({duration_seconds}s, guidance={guidance_scale})...")
+
+    if progress_callback:
+        progress_callback(10)
+
+    def _progress(generated, total):
+        if progress_callback:
+            if total <= 100:
+                pct = generated
+            else:
+                pct = min(10 + int(85 * generated / total), 95)
+            progress_callback(pct)
+
+    mg.set_generation_params(
+        duration=duration_seconds,
+        cfg_coef=guidance_scale,
+        use_sampling=True,
+        top_k=150,
+        temperature=0.7,
+    )
+    mg.set_custom_progress_callback(_progress)
+
+    audio = mg.generate([prompt], progress=True)
+
+    if progress_callback:
+        progress_callback(98)
+
+    audio_arr = np.array(audio[0])
+    if audio_arr.ndim == 2:
+        audio_arr = audio_arr.T
+    del audio
+
+    audio_arr = _postprocess_audio(audio_arr, mg.sample_rate)
+
+    if progress_callback:
+        progress_callback(100)
+
+    sample_rate = mg.sample_rate
+    gc.collect()
+    return audio_arr, sample_rate
+
+
+# ────────────────────────────────────────────────────────
+# ACE-Step Backend (fallback)
 # ────────────────────────────────────────────────────────
 
 def _load_acestep():
@@ -230,8 +322,17 @@ def _load_acestep():
 
 def generate_audio(prompt, duration_seconds=10, guidance_scale=3.0,
                    seed=None, model="small", progress_callback=None):
-    if _BACKEND == "mlx":
+    if _backend == "mlx":
         return generate_audio_mlx(
+            prompt=prompt,
+            duration_seconds=duration_seconds,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            model=model,
+            progress_callback=progress_callback,
+        )
+    elif _backend == "torch":
+        return generate_audio_torch(
             prompt=prompt,
             duration_seconds=duration_seconds,
             guidance_scale=guidance_scale,
@@ -253,7 +354,7 @@ def text_to_audio(prompt, duration_seconds=10, guidance_scale=3.0,
                   progress_callback=None):
     os.makedirs(output_dir, exist_ok=True)
 
-    backend_label = "MusicGen MLX" if _BACKEND == "mlx" else "ACE-Step 1.5"
+    backend_label = {"mlx": "MusicGen MLX", "torch": "MusicGen PyTorch", "acestep": "ACE-Step 1.5"}[_backend]
     print("=" * 60)
     print(f"TEXT-TO-AUDIO ({backend_label})")
     print("=" * 60)
@@ -268,8 +369,17 @@ def text_to_audio(prompt, duration_seconds=10, guidance_scale=3.0,
 
     print(f"[Audio] Instrumental prompt: {instrumental_prompt}")
 
-    if _BACKEND == "mlx":
+    if _backend == "mlx":
         audio_arr, sample_rate = generate_audio_mlx(
+            prompt=instrumental_prompt,
+            duration_seconds=duration_seconds,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            model=model,
+            progress_callback=progress_callback,
+        )
+    elif _backend == "torch":
+        audio_arr, sample_rate = generate_audio_torch(
             prompt=instrumental_prompt,
             duration_seconds=duration_seconds,
             guidance_scale=guidance_scale,
