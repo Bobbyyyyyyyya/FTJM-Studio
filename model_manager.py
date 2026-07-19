@@ -3,12 +3,16 @@ Centraal model management systeem.
 Biedt overzicht van alle AI modellen, hun status en卸载 functionaliteit.
 """
 import os
+import platform
 import shutil
 from pathlib import Path
 
 HF_CACHE = Path.home() / ".cache" / "huggingface" / "hub"
 LLM_DIR = Path("models/llm")
+ACESTEP_DIR = Path("ACE-Step-1.5")
 _dir_size_cache = {}
+
+_IS_APPLE_SILICON = platform.system() == "Darwin" and platform.machine() == "arm64"
 
 MODELS = [
     {
@@ -46,26 +50,38 @@ MODELS = [
     {
         "id": "musicgen_small",
         "name": "FTJM Beat Mini",
-        "description": "Muziek generatie - compact",
+        "description": "Muziek generatie - compact (Apple Silicon)",
         "category": "audio",
         "hf_repo": "facebook/musicgen-small",
         "size_gb": 2.0,
+        "platforms": ["darwin"],
     },
     {
         "id": "musicgen_medium",
         "name": "FTJM Beat",
-        "description": "Muziek generatie - gebalanceerd",
+        "description": "Muziek generatie - gebalanceerd (Apple Silicon)",
         "category": "audio",
         "hf_repo": "facebook/musicgen-medium",
         "size_gb": 7.5,
+        "platforms": ["darwin"],
     },
     {
         "id": "musicgen_large",
         "name": "FTJM Beat Pro",
-        "description": "Muziek generatie - premium kwaliteit",
+        "description": "Muziek generatie - premium kwaliteit (Apple Silicon)",
         "category": "audio",
         "hf_repo": "facebook/musicgen-large",
         "size_gb": 12.0,
+        "platforms": ["darwin"],
+    },
+    {
+        "id": "acestep_1_5",
+        "name": "FTJM Music",
+        "description": "Muziek generatie - songs met vocals (Windows/Linux/macOS)",
+        "category": "audio",
+        "hf_repo": "ACE-Step/Ace-Step1.5",
+        "size_gb": 5.0,
+        "platforms": ["win32", "linux", "darwin"],
     },
     {
         "id": "llm_small",
@@ -135,6 +151,9 @@ def is_model_installed(model_id):
     if not model:
         return False
 
+    if model_id == "acestep_1_5":
+        return ACESTEP_DIR.exists() and (ACESTEP_DIR / "pyproject.toml").exists()
+
     if "llm_file" in model:
         llm_path = LLM_DIR / model["llm_file"]
         return llm_path.exists()
@@ -157,6 +176,11 @@ def get_model_size(model_id):
     if not model:
         return 0
 
+    if model_id == "acestep_1_5":
+        if ACESTEP_DIR.exists():
+            return _get_dir_size_gb(ACESTEP_DIR)
+        return 0
+
     if "llm_file" in model:
         llm_path = LLM_DIR / model["llm_file"]
         if llm_path.exists():
@@ -170,9 +194,21 @@ def get_model_size(model_id):
 
 
 def get_all_models():
-    """Krijg status van alle modellen."""
+    """Krijg status van alle modellen (gefilterd op platform)."""
+    current_platform = platform.system().lower()
+    if current_platform == "darwin":
+        current_platform = "darwin"
+    elif current_platform == "windows":
+        current_platform = "win32"
+    elif current_platform == "linux":
+        current_platform = "linux"
+
     result = []
     for model in MODELS:
+        supported_platforms = model.get("platforms", None)
+        if supported_platforms and current_platform not in supported_platforms:
+            continue
+
         installed = is_model_installed(model["id"])
         actual_size = get_model_size(model["id"]) if installed else 0
         result.append({
@@ -198,7 +234,10 @@ def uninstall_model(model_id):
 
     freed = get_model_size(model_id)
 
-    if "llm_file" in model:
+    if model_id == "acestep_1_5":
+        if ACESTEP_DIR.exists():
+            shutil.rmtree(ACESTEP_DIR)
+    elif "llm_file" in model:
         llm_path = LLM_DIR / model["llm_file"]
         if llm_path.exists():
             llm_path.unlink()

@@ -13,3 +13,9 @@ llama-cpp-python
 huggingface-hub
 ddgs
 psutil
+
+# ACE-Step 1.5 (Windows/Linux fallback voor muziekgeneratie)
+# Wordt automatisch geinstalleerd als MLX niet beschikbaar is
+# Handmatig: cd ACE-Step-1.5 && pip install -e .
+diffusers>=0.28.0
+soundfile

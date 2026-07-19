@@ -18,6 +18,13 @@ try:
 except ImportError:
     mx = None
 
+_BACKEND = None
+
+if _MLX_AVAILABLE:
+    _BACKEND = "mlx"
+else:
+    _BACKEND = "acestep"
+
 _mg_model = None
 _mg_model_name = None
 
@@ -128,10 +135,12 @@ def _postprocess_audio(audio_arr, sample_rate):
     return audio_arr
 
 
-def _load_model(name="small"):
+# ────────────────────────────────────────────────────────
+# MLX Backend (Apple Silicon)
+# ────────────────────────────────────────────────────────
+
+def _load_model_mlx(name="small"):
     global _mg_model, _mg_model_name
-    if not _MLX_AVAILABLE:
-        raise RuntimeError("Audio generatie vereist Apple Silicon (MLX). Dit platform wordt niet ondersteund.")
     if _mg_model is not None and _mg_model_name == name:
         return _mg_model
 
@@ -139,8 +148,7 @@ def _load_model(name="small"):
         del _mg_model
         _mg_model = None
         gc.collect()
-        if _MLX_AVAILABLE:
-            mx.clear_cache()
+        mx.clear_cache()
 
     from audiocraft_mlx.models.musicgen import MusicGen
 
@@ -152,15 +160,9 @@ def _load_model(name="small"):
     return _mg_model
 
 
-def generate_audio(
-    prompt,
-    duration_seconds=10,
-    guidance_scale=3.0,
-    seed=None,
-    model="small",
-    progress_callback=None,
-):
-    mg = _load_model(model)
+def generate_audio_mlx(prompt, duration_seconds=10, guidance_scale=3.0,
+                       seed=None, model="small", progress_callback=None):
+    mg = _load_model_mlx(model)
 
     if progress_callback:
         progress_callback(5)
@@ -209,24 +211,51 @@ def generate_audio(
 
     sample_rate = mg.sample_rate
     gc.collect()
-    if _MLX_AVAILABLE:
-        mx.clear_cache()
+    mx.clear_cache()
     return audio_arr, sample_rate
 
 
-def text_to_audio(
-    prompt,
-    duration_seconds=10,
-    guidance_scale=3.0,
-    seed=None,
-    model="small",
-    output_dir="output",
-    progress_callback=None,
-):
+# ────────────────────────────────────────────────────────
+# ACE-Step Backend (Windows/Linux/macOS fallback)
+# ────────────────────────────────────────────────────────
+
+def _load_acestep():
+    from acestep_backend import text_to_audio as acestep_text_to_audio
+    return acestep_text_to_audio
+
+
+# ────────────────────────────────────────────────────────
+# Publieke interface (compatibel met beide backends)
+# ────────────────────────────────────────────────────────
+
+def generate_audio(prompt, duration_seconds=10, guidance_scale=3.0,
+                   seed=None, model="small", progress_callback=None):
+    if _BACKEND == "mlx":
+        return generate_audio_mlx(
+            prompt=prompt,
+            duration_seconds=duration_seconds,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            model=model,
+            progress_callback=progress_callback,
+        )
+    else:
+        from acestep_backend import generate_audio as acestep_gen
+        return acestep_gen(
+            prompt=prompt,
+            duration_seconds=duration_seconds,
+            progress_callback=progress_callback,
+        )
+
+
+def text_to_audio(prompt, duration_seconds=10, guidance_scale=3.0,
+                  seed=None, model="small", output_dir="output",
+                  progress_callback=None):
     os.makedirs(output_dir, exist_ok=True)
 
+    backend_label = "MusicGen MLX" if _BACKEND == "mlx" else "ACE-Step 1.5"
     print("=" * 60)
-    print("TEXT-TO-AUDIO (MusicGen MLX)")
+    print(f"TEXT-TO-AUDIO ({backend_label})")
     print("=" * 60)
     print(f"Prompt:  {prompt}")
     print(f"Duration: {duration_seconds}s")
@@ -239,14 +268,25 @@ def text_to_audio(
 
     print(f"[Audio] Instrumental prompt: {instrumental_prompt}")
 
-    audio_arr, sample_rate = generate_audio(
-        prompt=instrumental_prompt,
-        duration_seconds=duration_seconds,
-        guidance_scale=guidance_scale,
-        seed=seed,
-        model=model,
-        progress_callback=progress_callback,
-    )
+    if _BACKEND == "mlx":
+        audio_arr, sample_rate = generate_audio_mlx(
+            prompt=instrumental_prompt,
+            duration_seconds=duration_seconds,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            model=model,
+            progress_callback=progress_callback,
+        )
+    else:
+        from acestep_backend import text_to_audio as acestep_text_to_audio
+        return acestep_text_to_audio(
+            prompt=instrumental_prompt,
+            duration_seconds=duration_seconds,
+            guidance_scale=guidance_scale,
+            seed=seed,
+            output_dir=output_dir,
+            progress_callback=progress_callback,
+        )
 
     if progress_callback:
         progress_callback(100)
