@@ -9,7 +9,6 @@ safetensors
 librosa
 imageio
 imageio-ffmpeg
-llama-cpp-python
 huggingface-hub
 ddgs
 psutil
@@ -24,4 +23,7 @@ soundfile
 flashy
 encodec
 sentencepiece
+
+# Optioneel: lokale LLM (traag om te bouwen, niet nodig voor kerntaak)
+# llama-cpp-python
 
