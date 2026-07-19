@@ -4,6 +4,12 @@
   "description": "FTJM Studio - AI Media Generator",
   "main": "main.js",
   "author": "FTJM",
+  "contributors": [
+    {
+      "name": "Bobbyyyyyyyya",
+      "url": "https://github.com/Bobbyyyyyyyya"
+    }
+  ],
   "homepage": "https://github.com/Bobbyyyyyyyya/ftjm-studio",
   "license": "MIT",
   "scripts": {
