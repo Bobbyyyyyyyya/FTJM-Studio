@@ -93,10 +93,6 @@ jobs:
         working-directory: electron
         run: npx electron-builder --win nsis zip --x64 --publish never
 
-      - name: Build Windows ia32
-        working-directory: electron
-        run: npx electron-builder --win nsis zip --ia32 --publish never
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -178,8 +174,6 @@ jobs:
             |------|---------|
             | NSIS Installer (x64) | `FTJM.Studio.Setup.${{ github.ref_name }}.exe` |
             | ZIP Archive (x64) | `FTJM.Studio-${{ github.ref_name }}-x64.zip` |
-            | NSIS Installer (x86) | `FTJM.Studio.Setup.${{ github.ref_name }}.ia32.exe` |
-            | ZIP Archive (x86) | `FTJM.Studio-${{ github.ref_name }}-ia32.zip` |
 
             #### Linux
             | Type | Bestand |
