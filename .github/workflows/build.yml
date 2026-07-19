@@ -27,7 +27,32 @@ jobs:
         working-directory: electron
         run: npm ci
 
-      - name: Build macOS
+      - name: Check signing credentials
+        id: check-signing
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE" ]; then
+            echo "APPLE_CERTIFICATE=available" >> $GITHUB_ENV
+            echo "Code signing: ENABLED"
+          else
+            echo "APPLE_CERTIFICATE=" >> $GITHUB_ENV
+            echo "Code signing: DISABLED (unsigned build)"
+          fi
+
+      - name: Build macOS (signed)
+        if: env.APPLE_CERTIFICATE != ''
+        working-directory: electron
+        env:
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npx electron-builder --mac --arm64 --publish never
+
+      - name: Build macOS (unsigned)
+        if: env.APPLE_CERTIFICATE == ''
         working-directory: electron
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"

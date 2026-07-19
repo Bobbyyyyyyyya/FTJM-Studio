@@ -4,6 +4,8 @@
   "description": "FTJM Studio - AI Media Generator",
   "main": "main.js",
   "author": "FTJM",
+  "homepage": "https://github.com/Bobbyyyyyyyya/ftjm-studio",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
@@ -77,6 +79,10 @@
     "mac": {
       "category": "public.app-category.entertainment",
       "icon": "icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
@@ -104,6 +110,7 @@
     "linux": {
       "icon": "icon.png",
       "category": "Audio",
+      "maintainer": "FTJM",
       "target": [
         {
           "target": "AppImage",
