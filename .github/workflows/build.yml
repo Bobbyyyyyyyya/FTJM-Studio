@@ -26,14 +26,14 @@ jobs:
           node-version: '22'
 
       - name: Install system dependencies
-        run: brew install ffmpeg
+        run: brew install ffmpeg pkg-config cmake
 
       - name: Create Python venv and install dependencies
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
@@ -96,14 +96,14 @@ jobs:
           node-version: '22'
 
       - name: Install system dependencies
-        run: choco install ffmpeg
+        run: choco install ffmpeg pkgconfiglite cmake --yes
 
       - name: Create Python venv and install dependencies
         run: |
           python -m venv .venv
           .venv\Scripts\activate
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
@@ -141,14 +141,14 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg fakeroot rpm libfuse2 ffmpeg libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev
+          sudo apt-get install -y dpkg fakeroot rpm libfuse2 ffmpeg libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev pkg-config cmake build-essential
 
       - name: Create Python venv and install dependencies
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
