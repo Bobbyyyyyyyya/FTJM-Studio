@@ -79,7 +79,7 @@
       "icon": "icon.png",
       "target": [
         {
-          "target": "dir",
+          "target": "dmg",
           "arch": ["arm64"]
         }
       ]
@@ -88,7 +88,7 @@
       "icon": "icon.png",
       "target": [
         {
-          "target": "dir",
+          "target": "nsis",
           "arch": ["x64"]
         }
       ]
@@ -98,10 +98,16 @@
       "category": "Audio",
       "target": [
         {
-          "target": "dir",
+          "target": "AppImage",
           "arch": ["x64"]
         }
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icon.png",
+      "uninstallerIcon": "icon.png"
     }
   },
   "devDependencies": {

@@ -27,22 +27,24 @@ jobs:
         working-directory: electron
         run: npm ci
 
-      - name: Build macOS arm64
+      - name: Build macOS DMG
         working-directory: electron
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npx electron-builder --mac --arm64 --publish never
+        run: npx electron-builder --mac dmg --arm64 --publish never
 
-      - name: Zip app
+      - name: Find DMG
+        id: find-dmg
         run: |
-          cd dist/mac-arm64
-          zip -r -y "../../FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip" "FTJM Studio.app"
+          DMG=$(find dist -name "*.dmg" | head -1)
+          echo "dmg=$DMG" >> $GITHUB_OUTPUT
+          echo "Found DMG: $DMG"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mac-arm64
-          path: FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip
+          name: mac-installer
+          path: ${{ steps.find-dmg.outputs.dmg }}
 
   build-win:
     runs-on: windows-latest
@@ -61,20 +63,23 @@ jobs:
         working-directory: electron
         run: npm ci
 
-      - name: Build Windows x64
+      - name: Build Windows NSIS
         working-directory: electron
-        run: npx electron-builder --win --x64 --publish never
+        run: npx electron-builder --win nsis --x64 --publish never
 
-      - name: Zip app
+      - name: Find EXE
+        id: find-exe
+        shell: bash
         run: |
-          cd dist/win-unpacked
-          7z a "../../FTJM-Studio-${{ github.ref_name }}-win-x64.zip" .
+          EXE=$(find dist -name "*.exe" | head -1)
+          echo "exe=$EXE" >> $GITHUB_OUTPUT
+          echo "Found EXE: $EXE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: win-x64
-          path: FTJM-Studio-${{ github.ref_name }}-win-x64.zip
+          name: win-installer
+          path: ${{ steps.find-exe.outputs.exe }}
 
   build-linux:
     runs-on: ubuntu-latest
@@ -93,20 +98,22 @@ jobs:
         working-directory: electron
         run: npm ci
 
-      - name: Build Linux x64
+      - name: Build Linux AppImage
         working-directory: electron
-        run: npx electron-builder --linux --x64 --publish never
+        run: npx electron-builder --linux AppImage --x64 --publish never
 
-      - name: Zip app
+      - name: Find AppImage
+        id: find-appimage
         run: |
-          cd dist/linux-unpacked
-          zip -r "../../FTJM-Studio-${{ github.ref_name }}-linux-x64.zip" .
+          APPIMAGE=$(find dist -name "*.AppImage" | head -1)
+          echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
+          echo "Found AppImage: $APPIMAGE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux-x64
-          path: FTJM-Studio-${{ github.ref_name }}-linux-x64.zip
+          name: linux-installer
+          path: ${{ steps.find-appimage.outputs.appimage }}
 
   release:
     needs: [build-mac, build-win, build-linux]
@@ -116,6 +123,9 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
+      - name: List files
+        run: find . -type f | head -20
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -124,11 +134,11 @@ jobs:
             ## FTJM Studio ${{ github.ref_name }}
 
             ### Downloads
-            | Platform | Arch | Bestand |
-            |----------|------|---------|
-            | macOS | Apple Silicon (M1/M2/M3/M4) | `FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip` |
-            | Windows | x64 | `FTJM-Studio-${{ github.ref_name }}-win-x64.zip` |
-            | Linux | x64 | `FTJM-Studio-${{ github.ref_name }}-linux-x64.zip` |
+            | Platform | Installer |
+            |----------|-----------|
+            | macOS (Apple Silicon) | `FTJM Studio-${{ github.ref_name }}-arm64.dmg` |
+            | Windows (x64) | `FTJM Studio Setup ${{ github.ref_name }}.exe` |
+            | Linux (x64) | `FTJM Studio-${{ github.ref_name }}-x86_64.AppImage` |
 
             ### Vereisten
             - Python 3.10+ geinstalleerd
@@ -136,14 +146,14 @@ jobs:
             - RAM: 8GB min, 16GB aanbevolen
 
             ### Eerste gebruik
-            1. Download en unpack de zip voor jouw platform
-            2. Open Terminal/Command Prompt in de map
-            3. Installeer dependencies: `pip install -r requirements.txt`
-            4. Start: `cd electron && npm start`
+            1. Download en installeer de app voor jouw platform
+            2. Open Terminal/Command Prompt
+            3. Installeer Python dependencies: `pip install -r requirements.txt`
+            4. Start de app
             5. ACE-Step wordt automatisch gedownload bij eerste muziek generatie
           files: |
-            mac-arm64/FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip
-            win-x64/FTJM-Studio-${{ github.ref_name }}-win-x64.zip
-            linux-x64/FTJM-Studio-${{ github.ref_name }}-linux-x64.zip
+            mac-installer/*.dmg
+            win-installer/*.exe
+            linux-installer/*.AppImage
           draft: false
           prerelease: false
