@@ -1,0 +1,149 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron deps
+        working-directory: electron
+        run: npm ci
+
+      - name: Build macOS arm64
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npx electron-builder --mac --arm64 --publish never
+
+      - name: Zip app
+        run: |
+          cd dist/mac-arm64
+          zip -r -y "../../FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip" "FTJM Studio.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-arm64
+          path: FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip
+
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron deps
+        working-directory: electron
+        run: npm ci
+
+      - name: Build Windows x64
+        working-directory: electron
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: Zip app
+        run: |
+          cd dist/win-unpacked
+          7z a "../../FTJM-Studio-${{ github.ref_name }}-win-x64.zip" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-x64
+          path: FTJM-Studio-${{ github.ref_name }}-win-x64.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Electron deps
+        working-directory: electron
+        run: npm ci
+
+      - name: Build Linux x64
+        working-directory: electron
+        run: npx electron-builder --linux --x64 --publish never
+
+      - name: Zip app
+        run: |
+          cd dist/linux-unpacked
+          zip -r "../../FTJM-Studio-${{ github.ref_name }}-linux-x64.zip" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: FTJM-Studio-${{ github.ref_name }}-linux-x64.zip
+
+  release:
+    needs: [build-mac, build-win, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }} - FTJM Studio
+          body: |
+            ## FTJM Studio ${{ github.ref_name }}
+
+            ### Downloads
+            | Platform | Arch | Bestand |
+            |----------|------|---------|
+            | macOS | Apple Silicon (M1/M2/M3/M4) | `FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip` |
+            | Windows | x64 | `FTJM-Studio-${{ github.ref_name }}-win-x64.zip` |
+            | Linux | x64 | `FTJM-Studio-${{ github.ref_name }}-linux-x64.zip` |
+
+            ### Vereisten
+            - Python 3.10+ geinstalleerd
+            - GPU: 4GB+ VRAM (RTX 3060 of beter)
+            - RAM: 8GB min, 16GB aanbevolen
+
+            ### Eerste gebruik
+            1. Download en unpack de zip voor jouw platform
+            2. Open Terminal/Command Prompt in de map
+            3. Installeer dependencies: `pip install -r requirements.txt`
+            4. Start: `cd electron && npm start`
+            5. ACE-Step wordt automatisch gedownload bij eerste muziek generatie
+          files: |
+            mac-arm64/FTJM-Studio-${{ github.ref_name }}-mac-arm64.zip
+            win-x64/FTJM-Studio-${{ github.ref_name }}-win-x64.zip
+            linux-x64/FTJM-Studio-${{ github.ref_name }}-linux-x64.zip
+          draft: false
+          prerelease: false
