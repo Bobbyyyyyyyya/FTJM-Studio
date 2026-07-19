@@ -18,15 +18,21 @@ function getBaseDir() {
 
 function getPythonPath() {
   const baseDir = getBaseDir();
-  const candidates = process.platform === "win32"
-    ? [path.join(baseDir, ".venv", "Scripts", "python.exe"), "python", "py -3"]
-    : [path.join(baseDir, ".venv", "bin", "python3"), path.join(baseDir, ".venv", "bin", "python"), "python3", "python"];
+  const venvPython = process.platform === "win32"
+    ? path.join(baseDir, ".venv", "Scripts", "python.exe")
+    : path.join(baseDir, ".venv", "bin", "python3");
 
-  for (const p of candidates) {
-    try {
-      if (fs.existsSync(p)) return p;
-    } catch (e) {}
-  }
+  try {
+    if (fs.existsSync(venvPython)) return venvPython;
+  } catch (e) {}
+
+  const { execSync } = require("child_process");
+  const findCmd = process.platform === "win32" ? "where python" : "which python3 || which python";
+  try {
+    const result = execSync(findCmd, { encoding: "utf-8", timeout: 3000 }).trim().split("\n")[0];
+    if (result && fs.existsSync(result)) return result;
+  } catch (e) {}
+
   return process.platform === "win32" ? "python" : "python3";
 }
 

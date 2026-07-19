@@ -25,6 +25,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Create Python venv and install dependencies
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Install Electron deps
         working-directory: electron
         run: npm ci
@@ -85,6 +92,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Create Python venv and install dependencies
+        run: |
+          python -m venv .venv
+          .venv\Scripts\activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Install Electron deps
         working-directory: electron
         run: npm ci
@@ -117,6 +131,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+
+      - name: Create Python venv and install dependencies
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Install system dependencies
         run: |
@@ -182,16 +203,13 @@ jobs:
             | DEB Package (x64) | `ftjm-studio_${{ github.ref_name }}_amd64.deb` |
 
             ### Vereisten
-            - Python 3.10+ geinstalleerd
             - GPU: 4GB+ VRAM (RTX 3060 of beter)
             - RAM: 8GB min, 16GB aanbevolen
 
             ### Eerste gebruik
             1. Download en installeer de app voor jouw platform
-            2. Open Terminal/Command Prompt
-            3. Installeer Python dependencies: `pip install -r requirements.txt`
-            4. Start de app
-            5. ACE-Step wordt automatisch gedownload bij eerste muziek generatie
+            2. Start de app
+            3. ACE-Step wordt automatisch gedownload bij eerste muziek generatie
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.zip

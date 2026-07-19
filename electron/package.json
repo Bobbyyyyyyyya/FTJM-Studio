@@ -81,6 +81,10 @@
       {
         "from": "../musicgen-mlx",
         "to": "../musicgen-mlx"
+      },
+      {
+        "from": "../.venv",
+        "to": "../.venv"
       }
     ],
     "mac": {
