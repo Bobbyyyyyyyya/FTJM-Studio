@@ -1,16 +1,112 @@
 {
   "name": "ftjm-studio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "FTJM Studio - AI Media Generator",
   "main": "main.js",
   "author": "FTJM",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "postinstall": "node node_modules/electron/install.js"
+    "postinstall": "node node_modules/electron/install.js",
+    "build": "electron-builder",
+    "build:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --arm64",
+    "build:win": "electron-builder --win --x64",
+    "build:linux": "electron-builder --linux --x64"
+  },
+  "build": {
+    "appId": "com.ftjm.studio",
+    "productName": "FTJM Studio",
+    "directories": {
+      "output": "../dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/.cache",
+      "!*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../audio_pipeline.py",
+        "to": "../audio_pipeline.py"
+      },
+      {
+        "from": "../acestep_backend.py",
+        "to": "../acestep_backend.py"
+      },
+      {
+        "from": "../photo_pipeline.py",
+        "to": "../photo_pipeline.py"
+      },
+      {
+        "from": "../video_pipeline.py",
+        "to": "../video_pipeline.py"
+      },
+      {
+        "from": "../llm_backend.py",
+        "to": "../llm_backend.py"
+      },
+      {
+        "from": "../electron_backend.py",
+        "to": "../electron_backend.py"
+      },
+      {
+        "from": "../generate.py",
+        "to": "../generate.py"
+      },
+      {
+        "from": "../tools.py",
+        "to": "../tools.py"
+      },
+      {
+        "from": "../model_manager.py",
+        "to": "../model_manager.py"
+      },
+      {
+        "from": "../download_models.py",
+        "to": "../download_models.py"
+      },
+      {
+        "from": "../requirements.txt",
+        "to": "../requirements.txt"
+      },
+      {
+        "from": "../musicgen-mlx",
+        "to": "../musicgen-mlx"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "icon": "icon.png",
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["arm64"]
+        }
+      ]
+    },
+    "win": {
+      "icon": "icon.png",
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "icon.png",
+      "category": "Audio",
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["x64"]
+        }
+      ]
+    }
   },
   "devDependencies": {
-    "electron": "^43.0.0"
+    "electron": "^43.0.0",
+    "electron-builder": "^26.0.0"
   },
   "dependencies": {
     "electron-updater": "^6.8.9"

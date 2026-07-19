@@ -9,8 +9,15 @@ let backendProcess;
 let pendingCommands = new Map();
 let cmdCounter = 0;
 
+function getBaseDir() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "..");
+  }
+  return path.join(__dirname, "..");
+}
+
 function getPythonPath() {
-  const baseDir = path.join(__dirname, "..");
+  const baseDir = getBaseDir();
   const candidates = process.platform === "win32"
     ? [path.join(baseDir, ".venv", "Scripts", "python.exe"), "python", "py -3"]
     : [path.join(baseDir, ".venv", "bin", "python3"), path.join(baseDir, ".venv", "bin", "python"), "python3", "python"];
@@ -25,8 +32,9 @@ function getPythonPath() {
 
 function startBackend() {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, "..", "electron_backend.py");
-    const cwd = path.join(__dirname, "..");
+    const baseDir = getBaseDir();
+    const scriptPath = path.join(baseDir, "electron_backend.py");
+    const cwd = baseDir;
     const pythonPath = getPythonPath();
 
     backendProcess = spawn(pythonPath, [scriptPath], {
@@ -195,7 +203,7 @@ ipcMain.handle("send-command", async (event, cmd) => {
 });
 
 ipcMain.handle("get-file-path", (event, filename, galleryType) => {
-  const baseDir = path.join(__dirname, "..");
+  const baseDir = getBaseDir();
   if (galleryType === "photo") {
     const outputPath = path.join(baseDir, "output", filename);
     if (fs.existsSync(outputPath)) return outputPath;
