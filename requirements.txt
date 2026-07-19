@@ -20,5 +20,8 @@ psutil
 diffusers>=0.28.0
 soundfile
 
-# MusicGen PyTorch backend (Windows/Linux)
-audiocraft
+# MusicGen runtime deps (audiocraft zelf wordt --no-deps geinstalleerd)
+flashy
+encodec
+sentencepiece
+

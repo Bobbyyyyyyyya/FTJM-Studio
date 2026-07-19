@@ -26,14 +26,15 @@ jobs:
           node-version: '22'
 
       - name: Install system dependencies
-        run: brew install ffmpeg pkg-config cmake
+        run: brew install ffmpeg
 
       - name: Create Python venv and install dependencies
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel
-          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
+          pip install audiocraft --no-deps
+          pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
@@ -96,14 +97,15 @@ jobs:
           node-version: '22'
 
       - name: Install system dependencies
-        run: choco install ffmpeg pkgconfiglite cmake --yes
+        run: choco install ffmpeg --yes
 
       - name: Create Python venv and install dependencies
         run: |
           python -m venv .venv
           .venv\Scripts\activate
           python -m pip install --upgrade pip setuptools wheel
-          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
+          pip install audiocraft --no-deps
+          pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
@@ -141,14 +143,15 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg fakeroot rpm libfuse2 ffmpeg libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libswresample-dev libavfilter-dev pkg-config cmake build-essential
+          sudo apt-get install -y dpkg fakeroot rpm libfuse2 ffmpeg
 
       - name: Create Python venv and install dependencies
         run: |
           python3 -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel
-          pip install --only-binary :all: -r requirements.txt || pip install -r requirements.txt
+          pip install audiocraft --no-deps
+          pip install -r requirements.txt
 
       - name: Install Electron deps
         working-directory: electron
