@@ -81,7 +81,7 @@
       {
         "from": "../musicgen-mlx",
         "to": "../musicgen-mlx"
-      },
+      }
     ],
     "mac": {
       "category": "public.app-category.entertainment",
