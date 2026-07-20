@@ -129,7 +129,7 @@ jobs:
 
       - name: Build Windows x64
         working-directory: electron
-        run: npx electron-builder --win nsis zip --x64 --publish never
+        run: npx electron-builder --win nsis --x64 --publish never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -227,7 +227,6 @@ jobs:
             | Type | Bestand |
             |------|---------|
             | NSIS Installer (x64) | `FTJM.Studio.Setup.${{ github.ref_name }}.exe` |
-            | ZIP Archive (x64) | `FTJM.Studio-${{ github.ref_name }}-x64.zip` |
 
             #### Linux
             | Type | Bestand |

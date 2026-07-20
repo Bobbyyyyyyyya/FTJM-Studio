@@ -82,10 +82,6 @@
         "from": "../musicgen-mlx",
         "to": "../musicgen-mlx"
       },
-      {
-        "from": "../.venv",
-        "to": "../.venv"
-      }
     ],
     "mac": {
       "category": "public.app-category.entertainment",
@@ -110,10 +106,6 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "zip",
           "arch": ["x64"]
         }
       ]
