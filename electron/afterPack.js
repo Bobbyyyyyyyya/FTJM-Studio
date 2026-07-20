@@ -29,12 +29,14 @@ async function afterPack(context) {
     const venvSource = path.join(projectRoot, ".venv");
     const venvTemp = path.join(appOutDir, ".venv.tmp");
 
+    if (!fs.existsSync(venvInside) && fs.existsSync(venvSource)) {
+      console.log("Copying .venv into .app bundle...");
+      copyDirSync(venvSource, venvInside);
+    }
+
     if (fs.existsSync(venvInside)) {
       console.log("Moving .venv out of .app bundle for signing...");
       fs.renameSync(venvInside, venvTemp);
-    } else if (fs.existsSync(venvSource)) {
-      console.log("Copying .venv into .app bundle...");
-      copyDirSync(venvSource, venvInside);
     }
 
     console.log(`Ad-hoc signing: ${appPath}`);
