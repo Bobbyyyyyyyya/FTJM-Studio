@@ -1,6 +1,7 @@
 const { autoUpdater } = require("electron-updater");
 const { app, dialog, BrowserWindow } = require("electron");
 const path = require("path");
+const { execSync } = require("child_process");
 
 let updateWindow = null;
 
@@ -48,6 +49,16 @@ function setupAutoUpdater(mainWindow) {
 
   autoUpdater.on("update-downloaded", (info) => {
     console.log("[Updater] Update gedownload:", info.version);
+
+    if (process.platform === "darwin") {
+      try {
+        const updatePath = app.getPath("exe");
+        const appPath = path.join(updatePath, "..", "..", "..");
+        execSync(`xattr -cr "${appPath}"`, { stdio: "ignore", timeout: 10000 });
+        console.log("[Updater] Quarantine-attributen verwijderd.");
+      } catch (e) {}
+    }
+
     dialog.showMessageBox(mainWindow, {
       type: "info",
       title: "Update gereed",

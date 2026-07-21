@@ -1,6 +1,6 @@
 {
   "name": "ftjm-studio",
-  "version": "1.2.12",
+  "version": "1.2.13",
   "description": "FTJM Studio - AI Media Generator",
   "main": "main.js",
   "author": "FTJM",
@@ -17,7 +17,7 @@
     "dev": "electron . --dev",
     "postinstall": "node node_modules/electron/install.js",
     "build": "electron-builder",
-    "build:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --arm64",
+    "build:mac": "electron-builder --mac --arm64",
     "build:win": "electron-builder --win --x64",
     "build:linux": "electron-builder --linux --x64"
   },
@@ -93,11 +93,15 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64"]
+          "arch": [
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["arm64"]
+          "arch": [
+            "arm64"
+          ]
         }
       ]
     },
@@ -106,7 +110,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -117,11 +123,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

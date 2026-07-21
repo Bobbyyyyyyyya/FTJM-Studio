@@ -48,6 +48,10 @@ async function afterPack(context) {
       fs.renameSync(venvTemp, venvInside);
     }
 
+    console.log("Stripping quarantine attributes from .app bundle...");
+    execSync(`xattr -cr "${appPath}"`, { stdio: "inherit" });
+    console.log("Quarantine attributes removed.");
+
     console.log("Verifying .venv in app bundle...");
     const pythonBin = path.join(venvInside, "bin", "python3");
     if (!fs.existsSync(pythonBin)) {

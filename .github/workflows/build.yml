@@ -79,6 +79,26 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: npx electron-builder --mac --arm64 --publish never
 
+      - name: Recreate DMG with install script
+        if: env.APPLE_CERTIFICATE == ''
+        run: |
+          DMG_SRC=$(ls dist/*.dmg 2>/dev/null | head -1)
+          APP_NAME="FTJM Studio"
+          if [ -n "$DMG_SRC" ]; then
+            MOUNT_DIR=$(mktemp -d)
+            hdiutil attach "$DMG_SRC" -mountpoint "$MOUNT_DIR" -nobrowse -quiet
+            WORK_DIR=$(mktemp -d)
+            ditto "$MOUNT_DIR/$APP_NAME.app" "$WORK_DIR/$APP_NAME.app"
+            cp electron/install.command "$WORK_DIR/Install $APP_NAME.command"
+            chmod +x "$WORK_DIR/Install $APP_NAME.command"
+            hdiutil detach "$MOUNT_DIR" -quiet
+            DMG_OUT=$(echo "$DMG_SRC" | sed 's/.dmg/-fixed.dmg/')
+            hdiutil create -volname "$APP_NAME" -srcfolder "$WORK_DIR" -ov -format UDZO "$DMG_OUT"
+            mv "$DMG_OUT" "$DMG_SRC"
+            rm -rf "$WORK_DIR" "$MOUNT_DIR"
+            echo "DMG recreated with install script"
+          fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -200,6 +220,8 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -233,6 +255,16 @@ jobs:
             |------|---------|
             | AppImage (x64) | `FTJM.Studio-${{ github.ref_name }}-x86_64.AppImage` |
             | DEB Package (x64) | `ftjm-studio_${{ github.ref_name }}_amd64.deb` |
+
+            ### macOS Installatie
+            1. Download de DMG
+            2. Open de DMG
+            3. Dubbelklik op **"Install FTJM Studio"**
+            4. Voer je wachtwoord in als gevraagd
+            5. De app wordt automatisch geinstalleerd en geopend
+
+            > Bij de eerste keer kan macOS een waarschuwing tonen.
+            > Klik met de rechtermuisknop op "Install FTJM Studio" → **Open**
 
             ### Vereisten
             - GPU: 4GB+ VRAM (RTX 3060 of beter)

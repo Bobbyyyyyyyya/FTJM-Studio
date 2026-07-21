@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const path = require("path");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const fs = require("fs");
 const { setupAutoUpdater } = require("./updater");
 
@@ -26,7 +26,6 @@ function getPythonPath() {
     if (fs.existsSync(venvPython)) return venvPython;
   } catch (e) {}
 
-  const { execSync } = require("child_process");
   const findCmd = process.platform === "win32" ? "where python" : "which python3 || which python";
   try {
     const result = execSync(findCmd, { encoding: "utf-8", timeout: 3000 }).trim().split("\n")[0];
@@ -34,6 +33,36 @@ function getPythonPath() {
   } catch (e) {}
 
   return process.platform === "win32" ? "python" : "python3";
+}
+
+function stripQuarantine() {
+  if (process.platform !== "darwin") return;
+  if (!app.isPackaged) return;
+
+  try {
+    const appPath = path.join(process.resourcesPath, "..");
+    const result = execSync(`xattr -p com.apple.quarantine "${appPath}" 2>/dev/null`, {
+      encoding: "utf-8",
+      timeout: 5000,
+    }).trim();
+
+    if (result) {
+      console.log("[Quarantine] App has quarantine attribute, stripping...");
+      execSync(`xattr -cr "${appPath}"`, { stdio: "inherit", timeout: 10000 });
+      console.log("[Quarantine] Attributes removed.");
+      dialog.showMessageBox({
+        type: "info",
+        title: "Gatekeeper Fix",
+        message: "De quarantine-attributen zijn verwijderd. Herstart de app om verder te gaan.",
+        buttons: ["Herstarten"],
+      }).then(() => {
+        app.relaunch();
+        app.quit();
+      });
+    }
+  } catch (e) {
+    // No quarantine attribute or xattr not available - all good
+  }
 }
 
 function startBackend() {
@@ -176,6 +205,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   try {
+    stripQuarantine();
     await startBackend();
     console.log("Backend ready");
     createWindow();
