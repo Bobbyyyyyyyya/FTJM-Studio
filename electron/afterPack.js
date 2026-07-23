@@ -8,8 +8,12 @@ function copyDirSync(src, dest) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isSymbolicLink()) {
-      const target = fs.readlinkSync(srcPath);
-      fs.symlinkSync(target, destPath);
+      const realSrc = fs.realpathSync(srcPath);
+      if (fs.statSync(realSrc).isDirectory()) {
+        copyDirSync(realSrc, destPath);
+      } else {
+        fs.copyFileSync(realSrc, destPath);
+      }
     } else if (entry.isDirectory()) {
       copyDirSync(srcPath, destPath);
     } else {

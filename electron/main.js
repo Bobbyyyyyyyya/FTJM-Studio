@@ -213,9 +213,15 @@ app.whenReady().then(async () => {
   } catch (err) {
     console.error("Failed to start backend:", err);
     const pythonPath = getPythonPath();
+    const baseDir = getBaseDir();
+    const venvDir = path.join(baseDir, ".venv");
+    let extra = "";
+    if (!fs.existsSync(venvDir)) {
+      extra = "\n\nDe .venv map niet gevonden. Installeer dependencies met:\n  pip install -r requirements.txt";
+    }
     dialog.showErrorBox(
       "Fout",
-      `Kon de Python backend niet starten.\n\nPython: ${pythonPath}\nFout: ${err.message}\n\nZorg dat alle Python dependencies zijn geinstalleerd.`
+      `Kon de Python backend niet starten.\n\nPython: ${pythonPath}\nFout: ${err.message}${extra}\n\nZorg dat alle Python dependencies zijn geinstalleerd.`
     );
     app.quit();
   }
