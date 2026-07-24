@@ -106,6 +106,12 @@ async function ensureVenv(projectRoot) {
       stdio: "inherit",
       timeout: 600000,
     });
+
+    console.log("Installing audiocraft (--no-deps)...");
+    execSync(`"${pip}" install audiocraft --no-deps`, {
+      stdio: "inherit",
+      timeout: 120000,
+    });
   }
 
   console.log(".venv ready.");
