@@ -24,6 +24,6 @@ flashy
 encodec
 sentencepiece
 
-# Optioneel: lokale LLM (traag om te bouwen, niet nodig voor kerntaak)
-# llama-cpp-python
+# Optioneel: lokale LLM
+llama-cpp-python
 
